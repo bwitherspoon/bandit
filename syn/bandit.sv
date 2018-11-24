@@ -16,16 +16,18 @@ module bandit (
   input logic action_ready
 );
 
-  logic [15:0] action_value_table [0:255];
-  logic [ 7:0] action_value_index = 0;
-  logic [16:0] action_value = 0;
+  logic signed [15:0] action_value_table [0:255];
+  logic [7:0] action_value_index = 0;
+  logic signed [16:0] action_value = 0;
   logic [ 7:0] action_index = 0;
 
   initial reward_ready = 0;
 
   always_ff @(posedge clock) begin
-    if (reward_ready & reward_valid) begin
-      action_value_table[action_index] <= action_value + ((reward_data - action_value) >> 3);
+    if (reset) begin
+      reward_ready <= 0;
+    end else if (reward_ready & reward_valid) begin
+      action_value_table[action_index] <= action_value + (($signed(reward_data) - action_value) >> 3);
       reward_ready <= 0;
     end else if (~reward_ready & action_valid & action_ready) begin
       reward_ready <= 1;
@@ -42,8 +44,12 @@ module bandit (
     end
   end
 
+  initial action_valid = 0;
+
   always_ff @(posedge clock) begin
-    if (action_valid & action_ready) begin
+    if (reset) begin
+      action_valid <= 0;
+    end else if (action_valid & action_ready) begin
       action_valid <= 0;
     end else if (action_value_index == 255) begin
       action_valid <= 1;
