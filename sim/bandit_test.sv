@@ -11,7 +11,7 @@ module bandit_test;
   `include "dump.svh"
 
   `clock()
-  `reset
+  `reset()
 
   logic reward_valid = 0;
   logic [15:0] reward_data;
