@@ -1,3 +1,5 @@
+// Copyright 2018 Brett Witherspoon
+
 `ifndef RESET_INCLUDED
 `define RESET_INCLUDED
 

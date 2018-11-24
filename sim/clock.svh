@@ -1,3 +1,5 @@
+// Copyright 2018 Brett Witherspoon
+
 `ifndef CLOCK_INCLUDED
 `define CLOCK_INCLUDED
 

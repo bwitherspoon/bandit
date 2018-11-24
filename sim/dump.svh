@@ -1,3 +1,5 @@
+// Copyright 2018 Brett Witherspoon
+
 `ifndef DUMP_INCLUDED
 `define DUMP_INCLUDED
 
