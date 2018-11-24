@@ -1,11 +1,13 @@
 
-vpath %.sv ../syn
+syn_dir := ../syn
 
-bandit_test.vcd: bandit_test.vvp
+vpath %.sv $(syn_dir)
+
+testbench.vcd: testbench.vvp
 	vvp -n -l- $< -vcd +dump=$@ >/dev/null 2>$(@:.vcd=.log)
 
-bandit_test.vvp: bandit_test.sv bandit.sv
-	iverilog -y ../syn -g2012 -Wall -tvvp -o $@ $^
+testbench.vvp: testbench.sv bandit.sv
+	iverilog -Y.sv -y$(syn_dir) -g2012 -u -Wall -tvvp -o $@ $<
 
 clean:
 	-$(RM) *.vcd *.vvp *.log
