@@ -24,6 +24,7 @@ module bandit (
   logic signed [15:0] action_value = 0;
   logic [7:0] action_index = 0;
 
+  // Q_{n+1} = Q_n + \alpha [R_n - Q_n]
   always_ff @(posedge clock) begin
     if (reset) begin
       reward_ready <= 0;
@@ -35,6 +36,7 @@ module bandit (
     end
   end
 
+  // A_n = argmax Q_n(a)
   always_ff @(posedge clock) begin
     if (~reward_ready) begin
       if (action_value_table[action_value_index] > action_value) begin
