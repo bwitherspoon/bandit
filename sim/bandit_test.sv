@@ -29,17 +29,16 @@ module bandit_test;
     #CLOCK_PERIOD;
     hold_reset;
     @(negedge clock) action_ready = 1;
-    wait (action_valid == 1);
-    if (action_data != 0) $finish(1);
-    wait (action_valid == 0);
-    @(negedge clock) begin
-      reward_valid = 1;
-      reward_data = 255;
+    repeat (10) begin
+      wait (action_valid == 1);
+      wait (action_valid == 0);
+      @(negedge clock) begin
+        reward_valid = 1;
+        reward_data = $random;
+      end
+      wait (reward_ready == 1);
+      @(posedge clock) #1 reward_valid = 0;
     end
-    wait (reward_ready == 1);
-    @(posedge clock) #1 reward_valid = 0;
-    wait (action_valid == 1);
-    wait (action_valid == 0);
     @(negedge clock) $finish(0);
   end
 
