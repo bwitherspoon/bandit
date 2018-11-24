@@ -4,7 +4,7 @@
 `define RESET_INCLUDED
 
 `define reset(clock=clock, name=reset) \
-  logic ``name; \
+  bit ``name; \
   initial ``name <= 0; \
   task sync_reset; \
   begin \
