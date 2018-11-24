@@ -52,6 +52,7 @@ module bandit_test;
     dump_setup;
     sync_reset;
     test_cases(100);
+    $writememb("testbench.mem", dut.action_value_table);
     @(negedge clock) $finish;
   end
 

@@ -1,3 +1,4 @@
-*.vcd
 *.log
+*.mem
+*.vcd
 *.vvp

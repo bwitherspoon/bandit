@@ -10,6 +10,6 @@ testbench.vvp: testbench.sv bandit.sv
 	iverilog -Y.sv -y$(syn_dir) -g2012 -u -Wall -tvvp -o $@ $<
 
 clean:
-	-$(RM) *.vcd *.vvp *.log
+	-$(RM) *.vcd *.vvp *.log *.mem
 
 .PHONY: clean
