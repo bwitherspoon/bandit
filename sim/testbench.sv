@@ -26,8 +26,7 @@ module bandit_test;
   initial begin
     for (int i = 0; i < 256; i++) bandit.action_value_table[i] = 0;
     dump_setup;
-    #CLOCK_PERIOD;
-    hold_reset;
+    sync_reset;
     @(negedge clock) action_ready = 1;
     repeat (10) begin
       wait (action_valid == 1);

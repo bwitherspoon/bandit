@@ -6,12 +6,12 @@
 `define reset(clock=clock, name=reset) \
   logic ``name; \
   initial ``name <= 0; \
-  task hold_reset; \
+  task sync_reset; \
   begin \
-    ``name = 1; \
+    @(negedge ``clock) ``name = 1; \
     repeat (2) @ (posedge ``clock); \
     #1 ``name = 0; \
   end \
-endtask : hold_reset
+endtask : sync_reset
 
 `endif // RESET_INCLUDED
