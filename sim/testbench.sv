@@ -28,11 +28,13 @@ module bandit_test;
 
   task test_cases(int count);
   begin
-    @(negedge clock) action_ready = 1;
     repeat (count) begin
       wait (action_valid == 1);
-      action = action_data;
+      repeat (10) @(posedge clock);
+      @(negedge clock) action_ready = 1;
+      @(posedge clock) action = action_data;
       wait (action_valid == 0);
+      @(negedge clock) action_ready = 0;
       repeat (10) @(posedge clock);
       @(negedge clock) begin
         reward_valid = 1;
