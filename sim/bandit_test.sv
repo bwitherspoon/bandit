@@ -14,7 +14,7 @@ module bandit_test;
   `reset()
 
   logic reward_valid = 0;
-  logic [15:0] reward_data;
+  logic [7:0] reward_data;
   logic reward_ready;
 
   logic action_valid;

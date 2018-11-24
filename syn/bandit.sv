@@ -8,7 +8,7 @@ module bandit (
   input logic reset,
 
   input logic reward_valid,
-  input logic [15:0] reward_data,
+  input logic [7:0] reward_data,
   output logic reward_ready,
 
   output logic action_valid,
