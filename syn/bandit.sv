@@ -16,12 +16,13 @@ module bandit (
   input logic action_ready
 );
 
+  initial reward_ready = 0;
+  initial action_valid = 0;
+
   logic signed [15:0] action_value_table [0:255];
   logic [7:0] action_value_index = 0;
   logic signed [15:0] action_value = 0;
   logic [ 7:0] action_index = 0;
-
-  initial reward_ready = 0;
 
   always_ff @(posedge clock) begin
     if (reset) begin
@@ -43,8 +44,6 @@ module bandit (
       action_value_index <= action_value_index + 1;
     end
   end
-
-  initial action_valid = 0;
 
   always_ff @(posedge clock) begin
     if (reset) begin
