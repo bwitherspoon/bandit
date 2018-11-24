@@ -22,7 +22,7 @@ module bandit (
   logic signed [15:0] action_value_table [0:255];
   logic [7:0] action_value_index = 0;
   logic signed [15:0] action_value = 0;
-  logic [ 7:0] action_index = 0;
+  logic [7:0] action_index = 0;
 
   always_ff @(posedge clock) begin
     if (reset) begin
