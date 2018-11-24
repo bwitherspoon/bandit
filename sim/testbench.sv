@@ -33,6 +33,7 @@ module bandit_test;
       wait (action_valid == 1);
       action = action_data;
       wait (action_valid == 0);
+      repeat (10) @(posedge clock);
       @(negedge clock) begin
         reward_valid = 1;
         reward_data = rewards[action];
