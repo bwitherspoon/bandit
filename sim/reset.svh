@@ -4,7 +4,8 @@
 `define RESET_INCLUDED
 
 `define reset(clock=clock, name=reset) \
-  logic ``name = 0; \
+  logic ``name; \
+  initial ``name <= 0; \
   task hold_reset; \
   begin \
     ``name = 1; \
