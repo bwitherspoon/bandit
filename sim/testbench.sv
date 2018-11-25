@@ -21,10 +21,11 @@ module testbench;
   logic action_valid;
   logic [7:0] action_data;
   logic action_ready = 0;
+  logic action_gready = 0;
 
-  bandit dut(.*);
+  bandit agent(.*);
 
-  task test_learn(int count);
+  task test_agent(int trials, int tests);
     bit signed [7:0] rewards [0:255];
     bit [7:0] action;
     int unsigned result;
@@ -35,7 +36,8 @@ module testbench;
       $info("preferring action %0d", result);
       rewards[result] = 64;
       // Train
-      repeat (count) begin
+      $info("running %0d training trials", trials);
+      repeat (trials) begin
         wait (action_valid == 1);
         repeat (randint(16)) @(posedge clock);
         @(negedge clock) action_ready = 1;
@@ -50,27 +52,40 @@ module testbench;
         wait (reward_ready == 1);
         @(posedge clock) #1 reward_valid = 0;
       end
-      // Verify
-      wait (action_valid == 1);
-      @(posedge clock) if (action_data != result) begin
-        $error("incorrect action %0d", action_data);
-        $stop;
-      end else begin
-        $info("correct action %0d", action_data);
+      // Test
+      action_gready = 1;
+      repeat (tests) begin
+        wait (action_valid == 1);
+        @(negedge clock) action_ready = 1;
+        @(posedge clock) if (action_data != result) begin
+          $error("incorrect action %0d", action_data);
+          $stop;
+        end
+        wait (action_valid == 0);
+        @(negedge clock) begin
+          action_ready = 0;
+          reward_valid = 1;
+          reward_data = rewards[action];
+        end
+        wait (reward_ready == 1);
+        @(posedge clock) #1 reward_valid = 0;
       end
+      action_gready = 0;
+      $info("passed %0d tests for action", tests, result);
     end
-  endtask : test_cases
+  endtask : test_agent
 
   initial begin
     dump_setup;
     seed_setup;
     // Zero is currently an invalid action
-    dut.action_value_table[0] = -128;
+    agent.action_value_table[0] = -128;
     // Optimistic initial action-values to encourage initial exploration
-    for (int i = 1; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 127;
+    for (int i = 1; i < $size(agent.action_value_table[i]); i++)
+      agent.action_value_table[i] = 127;
     sync_reset;
-    test_learn(16000);
-    $writememb("testbench.mem", dut.action_value_table);
+    test_agent(16000, 100);
+    $writememb("testbench.mem", agent.action_value_table);
     @(negedge clock) $finish;
   end
 
