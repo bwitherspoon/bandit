@@ -16,7 +16,8 @@ module bandit #(
 
   output logic action_valid,
   output logic [7:0] action_data,
-  input logic action_ready
+  input logic action_ready,
+  input logic action_gready
 );
 
   // State register
@@ -76,7 +77,7 @@ module bandit #(
     if (reset) begin
       action_value_count <= 0;
     end else if (state == DECIDING) begin
-      if (&action_count) begin
+      if (~action_gready & &action_count) begin
         action_value <= action_value_table[action_value_index];
         action_index <= action_value_index;
       end else begin
