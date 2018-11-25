@@ -33,6 +33,7 @@ module bandit #(
 
   logic signed [15:0] action_value = 0;
   logic [7:0] action_index = 0;
+  logic [3:0] action_count = 0;
 
   // Mealy finite-state machine
   always_ff @(posedge clock) begin
@@ -41,7 +42,7 @@ module bandit #(
     end else begin
       case (state)
         DECIDING:
-          if (&action_value_count) state <= ACTUATING; // FIXME 255 LFSR states
+          if (&action_value_count | &action_count) state <= ACTUATING;
         ACTUATING:
           if (action_valid & action_ready) state <= OBSERVING;
         OBSERVING:
@@ -50,6 +51,14 @@ module bandit #(
           ;
       endcase
     end
+  end
+
+  // Action counter to approximate epsilon-gready exploration
+  always_ff @(posedge clock) begin
+    if (reset)
+      action_count <= 0;
+    else if (action_valid & action_ready)
+      action_count <= action_count + 1;
   end
 
   // Fibonacci LFSR for pseudorandom actions (default: x^8 + x^6 + x^5 + x^4 + 1)
@@ -67,11 +76,16 @@ module bandit #(
     if (reset) begin
       action_value_count <= 0;
     end else if (state == DECIDING) begin
-      if (action_value_table[action_value_index] > action_value) begin
+      if (&action_count) begin
         action_value <= action_value_table[action_value_index];
         action_index <= action_value_index;
+      end else begin
+        if (action_value_table[action_value_index] > action_value) begin
+          action_value <= action_value_table[action_value_index];
+          action_index <= action_value_index;
+        end
+        action_value_count <= action_value_count + 1;
       end
-      action_value_count <= action_value_count + 1;
     end
   end
 
