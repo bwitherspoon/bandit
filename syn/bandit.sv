@@ -44,9 +44,9 @@ module bandit #(
         DECIDING:
           if (&action_value_count | &action_count) state <= ACTUATING;
         ACTUATING:
-          if (action_valid & action_ready) state <= OBSERVING;
+          if (action_ready) state <= OBSERVING;
         OBSERVING:
-          if (reward_valid & reward_ready) state <= DECIDING;
+          if (reward_valid) state <= DECIDING;
         default:
           ;
       endcase
