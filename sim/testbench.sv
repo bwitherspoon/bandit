@@ -2,7 +2,7 @@
 
 `default_nettype none
 
-module bandit_test;
+module testbench;
   timeunit 1ns;
   timeprecision 1ps;
 
@@ -47,15 +47,16 @@ module bandit_test;
   endtask : test_cases
 
   initial begin
-    // Optimistic initial values to encourage exploration
-    for (int i = 0; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 0;
-    dut.action_value_table[64] = 127;
-    // Reward only a few actions
-    for (int i = 0; i < $size(rewards); i++) rewards[i] = 0;
-    rewards[64] = 3;
+    // Zero is currently an invalid action
+    dut.action_value_table[0] = -128;
+    // Optimistic initial action-values to encourage initial exploration
+    for (int i = 1; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 127;
+    // Reward only a single random action
+    for (int i = 0; i < $size(rewards); i++) rewards[i] = -32;
+    rewards[1] = 64;
     dump_setup;
     sync_reset;
-    test_cases(100);
+    test_cases(16000);
     $writememb("testbench.mem", dut.action_value_table);
     @(negedge clock) $finish;
   end
