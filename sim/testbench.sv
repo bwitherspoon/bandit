@@ -48,7 +48,8 @@ module bandit_test;
 
   initial begin
     // Optimistic initial values to encourage exploration
-    for (int i = 0; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 5;
+    for (int i = 0; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 0;
+    dut.action_value_table[64] = 127;
     // Reward only a few actions
     for (int i = 0; i < $size(rewards); i++) rewards[i] = 0;
     rewards[64] = 3;
