@@ -22,13 +22,19 @@ module testbench;
   logic [7:0] action_data;
   logic action_ready = 0;
 
-  bit signed [7:0] rewards [0:255];
-
   bandit dut(.*);
 
-  task test_cases(int count);
+  task test_learn(int count);
+    bit signed [7:0] rewards [0:255];
     bit [7:0] action;
+    int unsigned result;
     begin
+      // Initialize
+      for (int i = 0; i < $size(rewards); i++) rewards[i] = -32;
+      result = randint(256);
+      $info("preferring action %0d", result);
+      rewards[result] = 64;
+      // Train
       repeat (count) begin
         wait (action_valid == 1);
         repeat (randint(16)) @(posedge clock);
@@ -44,10 +50,16 @@ module testbench;
         wait (reward_ready == 1);
         @(posedge clock) #1 reward_valid = 0;
       end
+      // Verify
+      wait (action_valid == 1);
+      @(posedge clock) if (action_data != result) begin
+        $error("incorrect action %0d", action_data);
+        $stop;
+      end else begin
+        $info("correct action %0d", action_data);
+      end
     end
   endtask : test_cases
-
-  int unsigned action;
 
   initial begin
     dump_setup;
@@ -56,13 +68,8 @@ module testbench;
     dut.action_value_table[0] = -128;
     // Optimistic initial action-values to encourage initial exploration
     for (int i = 1; i < $size(dut.action_value_table[i]); i++) dut.action_value_table[i] = 127;
-    // Reward only a single random action
-    for (int i = 0; i < $size(rewards); i++) rewards[i] = -32;
-    action = randint(256);
-    $info("preferring action %0d", action);
-    rewards[action] = 64;
     sync_reset;
-    test_cases(16000);
+    test_learn(16000);
     $writememb("testbench.mem", dut.action_value_table);
     @(negedge clock) $finish;
   end
