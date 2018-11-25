@@ -3,8 +3,10 @@ syn_dir := ../syn
 
 vpath %.sv $(syn_dir)
 
-testbench.vcd: testbench.vvp
-	vvp -n -l- $< -vcd +dump=$@ >/dev/null 2>$(@:.vcd=.log)
+all: testbench.vvp
+
+test: testbench.vvp
+	vvp -n -l- $< -vcd +dump=$(<:.vvp=.vcd) +seed=$(shell echo $$RANDOM) >/dev/null 2>$(<:.vvp=.log)
 
 testbench.vvp: testbench.sv bandit.sv
 	iverilog -Y.sv -y$(syn_dir) -g2012 -u -Wall -tvvp -o $@ $<
@@ -12,4 +14,4 @@ testbench.vvp: testbench.sv bandit.sv
 clean:
 	-$(RM) *.vcd *.vvp *.log *.mem
 
-.PHONY: clean
+.PHONY: all test clean
