@@ -7,7 +7,7 @@ task dump_setup;
   string file;
   if ($value$plusargs("dump=%s", file)) begin
     $dumpfile(file);
-    $dumpvars;
+    $dumpvars(1);
   end
 endtask : dump_setup
 
