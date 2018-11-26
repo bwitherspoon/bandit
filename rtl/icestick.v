@@ -36,7 +36,7 @@ module icestick (
 
   wire serial_error;
 
-  action_value agent (
+  action_value #(.INIT("action_value.mem")) agent (
     .clock(clk),
     .reset(1'b0),
     .reward_valid(reward_valid),

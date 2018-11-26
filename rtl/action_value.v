@@ -4,6 +4,7 @@
 `default_nettype none
 
 module action_value #(
+  parameter INIT = "",
   parameter SEED = 8'hff,
   parameter TAPS = 8'hb1 // x^8 + x^6 + x^5 + x^4 + 1
 )(
@@ -27,6 +28,8 @@ module action_value #(
 
   // Memory for action-value table
   reg [15:0] action_value [0:255];
+
+  if (INIT != "") initial $readmemh(INIT, action_value, 0, 255);
 
   // Pseudorandom action from action-value table
   reg [7:0] action = SEED;
