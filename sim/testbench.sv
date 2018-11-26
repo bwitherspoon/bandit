@@ -23,70 +23,82 @@ module testbench;
   logic action_ready = 0;
   logic action_gready = 0;
 
-  bandit agent(.*);
+  enum {
+    SUCCESS,
+    FAILURE
+  } status = SUCCESS;
+
+  action_value agent(.*);
 
   task test_agent(int trials, int tests);
     bit signed [7:0] rewards [0:255];
     bit [7:0] action;
     int unsigned result;
-    begin
-      // Initialize
-      for (int i = 0; i < $size(rewards); i++) rewards[i] = -32;
-      result = randint(256);
-      $info("preferring action %0d", result);
-      rewards[result] = 64;
-      // Train
-      $info("running %0d training trials", trials);
-      repeat (trials) begin
-        wait (action_valid == 1);
-        repeat (randint(16)) @(posedge clock);
-        @(negedge clock) action_ready = 1;
-        @(posedge clock) action = action_data;
-        wait (action_valid == 0);
-        @(negedge clock) action_ready = 0;
-        repeat (randint(16)) @(posedge clock);
-        @(negedge clock) begin
-          reward_valid = 1;
-          reward_data = rewards[action];
-        end
-        wait (reward_ready == 1);
-        @(posedge clock) #1 reward_valid = 0;
+    int unsigned errors;
+
+    // FIXME Zero is currently an invalid action
+    agent.action_value[0] = -128;
+    // TODO Optimistic initial action-values to encourage initial exploration
+    for (int i = 1; i < $size(agent.action_value[i]); i++)
+      agent.action_value[i] = 0;
+    // Reward a signle random action
+    for (int i = 0; i < $size(rewards); i++) rewards[i] = -32;
+    result = randint(256);
+    rewards[result] = 64;
+
+    // Train
+    $info("running %0d training trials for action %0d", trials, result);
+    repeat (trials) begin
+      wait (action_valid == 1);
+      repeat (randint(16)) @(posedge clock);
+      @(negedge clock) action_ready = 1;
+      @(posedge clock) action = action_data;
+      wait (action_valid == 0);
+      @(negedge clock) action_ready = 0;
+      repeat (randint(16)) @(posedge clock);
+      @(negedge clock) begin
+        reward_valid = 1;
+        reward_data = rewards[action];
       end
-      // Test
-      action_gready = 1;
-      repeat (tests) begin
-        wait (action_valid == 1);
-        @(negedge clock) action_ready = 1;
-        @(posedge clock) if (action_data != result) begin
-          $error("incorrect action %0d", action_data);
-          $stop;
-        end
-        wait (action_valid == 0);
-        @(negedge clock) begin
-          action_ready = 0;
-          reward_valid = 1;
-          reward_data = rewards[action];
-        end
-        wait (reward_ready == 1);
-        @(posedge clock) #1 reward_valid = 0;
-      end
-      action_gready = 0;
-      $info("passed %0d tests for action", tests, result);
+      wait (reward_ready == 1);
+      @(posedge clock) #1 reward_valid = 0;
     end
+
+    // Test
+    errors = 0;
+    action_gready = 1;
+    repeat (tests) begin
+      wait (action_valid == 1);
+      @(negedge clock) action_ready = 1;
+      @(posedge clock) action = action_data;
+      if (action != result) begin
+        $error("incorrect action %0d", action_data);
+        status = FAILURE;
+        errors++;
+      end
+      wait (action_valid == 0);
+      @(negedge clock) begin
+        action_ready = 0;
+        reward_valid = 1;
+        reward_data = rewards[action];
+      end
+      wait (reward_ready == 1);
+      @(posedge clock) #1 reward_valid = 0;
+    end
+    action_gready = 0;
+    $info("passed %0d and failed %0d tests for action %0d", tests - errors, errors, result);
   endtask : test_agent
 
   initial begin
     dump_setup;
     seed_setup;
-    // Zero is currently an invalid action
-    agent.action_value_table[0] = -128;
-    // Optimistic initial action-values to encourage initial exploration
-    for (int i = 1; i < $size(agent.action_value_table[i]); i++)
-      agent.action_value_table[i] = 127;
     sync_reset;
-    test_agent(16000, 100);
-    $writememb("testbench.mem", agent.action_value_table);
-    @(negedge clock) $finish;
+    test_agent(1000, 100);
+    $writememh("action_value.mem", agent.action_value);
+    if (status == FAILURE)
+      $stop;
+    else
+      $finish;
   end
 
 endmodule // BanditTest
