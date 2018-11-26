@@ -31,14 +31,14 @@ module action_value #(
 
   if (INIT != "") initial $readmemh(INIT, action_value, 0, 255);
 
-  // Pseudorandom action from action-value table
+  // Pseudo-random action from action-value table
   reg [7:0] action = SEED;
+
+  // Value of pseudo-random acion from action-value table
+  reg signed [15:0] value;
 
   // Delay register to align action with values
   reg [7:0] value_action;
-
-  // Value of pseudorandom acion from action-value table
-  reg signed [15:0] value;
 
   // Counter for action-value table decision
   reg [7:0] index = 0;
@@ -52,16 +52,16 @@ module action_value #(
   // Counter for actions taken
   reg [3:0] count = 0;
 
-  // Wire for signed reward of action taken
+  // Wire for reward of action taken
   wire signed [7:0] reward = reward_data;
 
   // Wire for action-value update Q_{n+1} = Q_n + \alpha [R_n - Q_n]
   wire signed [15:0] update = utility + ((reward - utility) >>> 3);
 
-  // Wire for explore signal
+  // Wire for exploration signal
   wire explore = ~action_gready & count == 15;
 
-  // Wire for exploit signal
+  // Wire for exploitation signal
   wire exploit = index == 255;
 
   // Mealy finite-state machine
@@ -82,7 +82,7 @@ module action_value #(
     end
   end
 
-  // Fibonacci LFSR for pseudorandom action
+  // Fibonacci LFSR for pseudo-random action
   always @(posedge clock) begin
     if (reset) begin
       action <= SEED;
@@ -106,7 +106,7 @@ module action_value #(
       action_value[actuation] <= update;
   end
 
-  // Decide A_n = argmax Q_n(a)
+  // Explore or exploit A_n = argmax Q_n(a)
   always @(posedge clock) begin
     if (reset) begin
       actuation <= 0;
@@ -122,7 +122,7 @@ module action_value #(
     end
   end
 
-  // Counter for action-value decision
+  // Counter for action-value decision state
   always @(posedge clock) begin
     if (reset)
       index <= 0;
@@ -130,7 +130,7 @@ module action_value #(
       index <= index + 1;
   end
 
-  // Counter for actions
+  // Counter of actions for approximating epsilon-greedy method
   always @(posedge clock) begin
     if (reset)
       count <= 0;
