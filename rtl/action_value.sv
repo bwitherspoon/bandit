@@ -77,11 +77,12 @@ module action_value #(
           if (action_ready) state <= OBSERVING;
         OBSERVING:
           if (reward_valid) state <= DECIDING;
-        default:
+        default: begin
+          state <= 2'bxx;
 `ifdef FORMAL
-          assert(state != 2'b11)
+          assert(state != 2'b11);
 `endif
-          ;
+        end
       endcase
     end
   end
