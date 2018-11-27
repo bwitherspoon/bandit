@@ -8,49 +8,49 @@ module action_value #(
   parameter SEED = 8'hff,
   parameter TAPS = 8'hb1 // x^8 + x^6 + x^5 + x^4 + 1
 )(
-  input wire clock,
-  input wire reset,
+  input logic clock,
+  input logic reset,
 
-  input wire reward_valid,
-  input wire [7:0] reward_data,
-  output wire reward_ready,
+  input logic reward_valid,
+  input logic [7:0] reward_data,
+  output logic reward_ready,
 
-  output wire action_valid,
-  output wire [7:0] action_data,
-  input wire action_ready,
-  input wire action_gready
+  output logic action_valid,
+  output logic [7:0] action_data,
+  input logic action_ready,
+  input logic action_gready
 );
   // State register
   localparam DECIDING = 2'b00;
   localparam ACTUATING = 2'b01;
   localparam OBSERVING = 2'b10;
-  reg [1:0] state = DECIDING;
+  logic [1:0] state;
 
   // Memory for action-value table
-  reg [15:0] action_value [0:255];
+  logic [15:0] action_value [0:255];
 
   if (INIT != "") initial $readmemh(INIT, action_value, 0, 255);
 
   // Pseudo-random action from action-value table
-  reg [7:0] action = SEED;
+  logic [7:0] action;
 
   // Value of pseudo-random acion from action-value table
-  reg signed [15:0] value;
+  logic signed [15:0] value;
 
   // Delay register to align action with values
-  reg [7:0] value_action;
+  logic [7:0] value_action;
 
   // Counter for action-value table decision
-  reg [7:0] index = 0;
+  logic [7:0] index;
 
   // Register for action taken
-  reg [7:0] actuation;
+  logic [7:0] actuation;
 
   // Register for value of action taken
-  reg signed [15:0] utility = -128;
+  logic signed [15:0] utility;
 
   // Counter for actions taken
-  reg [3:0] count = 0;
+  logic [3:0] count;
 
   // Wire for reward of action taken
   wire signed [7:0] reward = reward_data;
@@ -65,7 +65,8 @@ module action_value #(
   wire exploit = index == 255;
 
   // Mealy finite-state machine
-  always @(posedge clock) begin
+  initial state = DECIDING;
+  always_ff @(posedge clock) begin
     if (reset) begin
       state <= DECIDING;
     end else begin
@@ -77,13 +78,17 @@ module action_value #(
         OBSERVING:
           if (reward_valid) state <= DECIDING;
         default:
+`ifdef FORMAL
+          assert(state != 2'b11)
+`endif
           ;
       endcase
     end
   end
 
   // Fibonacci LFSR for pseudo-random action
-  always @(posedge clock) begin
+  initial action = SEED;
+  always_ff @(posedge clock) begin
     if (reset) begin
       action <= SEED;
     end else begin
@@ -93,23 +98,23 @@ module action_value #(
   end
 
   // Delay register to align action with value
-  always @(posedge clock) value_action <= action;
+  always_ff @(posedge clock) value_action <= action;
 
   // Read memory for action-value table
-  always @(posedge clock) begin
+  always_ff @(posedge clock) begin
     value <= action_value[action];
   end
 
   // Write memory for action-value table
-  always @(posedge clock) begin
+  always_ff @(posedge clock) begin
     if (state == OBSERVING & reward_valid)
       action_value[actuation] <= update;
   end
 
   // Explore or exploit A_n = argmax Q_n(a)
-  always @(posedge clock) begin
+  initial utility = -128;
+  always_ff @(posedge clock) begin
     if (reset) begin
-      actuation <= 0;
       utility <= -128;
     end else if (state == DECIDING) begin
       if (explore || value > utility) begin
@@ -123,7 +128,8 @@ module action_value #(
   end
 
   // Counter for action-value decision state
-  always @(posedge clock) begin
+  initial index = 0;
+  always_ff @(posedge clock) begin
     if (reset)
       index <= 0;
     else if (state == DECIDING)
@@ -131,7 +137,8 @@ module action_value #(
   end
 
   // Counter of actions for approximating epsilon-greedy method
-  always @(posedge clock) begin
+  initial count = 0;
+  always_ff @(posedge clock) begin
     if (reset)
       count <= 0;
     else if (action_valid & action_ready)
