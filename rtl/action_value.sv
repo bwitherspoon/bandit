@@ -150,4 +150,17 @@ module action_value #(
   assign action_valid = state == ACTUATING;
   assign action_data = actuation;
 
+`ifdef FORMAL
+  logic past_valid;
+  initial past_valid = 0;
+  always_ff @(posedge clock) past_valid <= 1;
+
+  always_ff @(posedge clock) begin
+      if (past_valid && $past(action_valid) && $past(~action_ready)) begin
+        assert(action_valid);
+        assert($stable(action_data));
+      end
+  end
+`endif
+
 endmodule // bandit
